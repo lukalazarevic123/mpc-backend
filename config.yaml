@@ -1,0 +1,11 @@
+serverConf:
+  host: "localhost"
+  port: 8081
+
+dbConfig:
+  host: "localhost"
+  port: 5432
+  username: "mpc"
+  password: "mpc"
+  database: "mpc"
+  sslmode: "disable"
