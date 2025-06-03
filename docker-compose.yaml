@@ -1,0 +1,40 @@
+services:
+  masterdb:
+    image: postgres:12
+    restart: always
+    container_name: masterdb
+    environment:
+      POSTGRES_USER: mpc
+      POSTGRES_PASSWORD: mpc
+      POSTGRES_DB: mpc
+    ports:
+      - "1111:5432"
+    networks:
+      - mpc_network
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", 'pg_isready -U postgres -d "mpc"']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  adminer:
+    image: adminer
+    restart: always
+    environment:
+      ADMINER_DEFAULT_SERVER: masterdb
+      ADMINER_DEFAULT_USER: mpc
+      ADMINER_DEFAULT_PASSWORD: mpc
+      ADMINER_DEFAULT_DB: mpc
+    ports:
+      - 8080:8080
+    networks:
+      - mpc_network
+
+volumes:
+  pg_data:
+
+networks:
+  mpc_network:
+    driver: bridge
