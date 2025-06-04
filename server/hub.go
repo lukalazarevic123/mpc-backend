@@ -1,6 +1,7 @@
 package server
 
 import (
+	"mpc-backend/types"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -13,6 +14,13 @@ type Connection struct {
 	Address string
 }
 
+// TransactionState holds the details of a pending transaction.
+type TransactionState struct {
+	TransactionNotification types.TransactionNotification
+	Confirmations           int
+	Threshold               int
+}
+
 // Hub manages active websocket connections and organization rooms.
 type Hub struct {
 	// mu protects the maps below.
@@ -20,14 +28,16 @@ type Hub struct {
 	// mapping of user addresses to their websocket connections
 	connections map[string]*Connection
 	// mapping of organization IDs to a set of addresses connected to that room
-	orgRooms map[string]map[string]*Connection
+	orgRooms            map[string]map[string]*Connection
+	pendingTransactions map[string]*TransactionState
 }
 
 // NewHub creates a new Hub instance.
 func NewHub() *Hub {
 	return &Hub{
-		connections: make(map[string]*Connection),
-		orgRooms:    make(map[string]map[string]*Connection),
+		connections:         make(map[string]*Connection),
+		orgRooms:            make(map[string]map[string]*Connection),
+		pendingTransactions: make(map[string]*TransactionState),
 	}
 }
 
@@ -113,4 +123,15 @@ func (h *Hub) BroadcastOrganization(orgID string, message interface{}) {
 			log.Printf("Error sending message to %s in room %s: %v", addr, orgID, err)
 		}
 	}
+}
+
+func (h *Hub) RegisterPendingTransaction(orgID string, notif types.TransactionNotification, threshold int) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.pendingTransactions[orgID] = &TransactionState{
+		TransactionNotification: notif,
+		Confirmations:           0,
+		Threshold:               threshold,
+	}
+	log.Printf("Registered pending transaction for org %s with threshold %d", orgID, threshold)
 }
