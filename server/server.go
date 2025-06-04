@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"mpc-backend/config"
+	crud "mpc-backend/core"
 	"mpc-backend/db"
 
 	"github.com/rs/zerolog/log"
@@ -18,9 +19,9 @@ func NewServer(conf config.Configuration) error {
 		return fmt.Errorf("could not connect to db: %w", err)
 	}
 
-	log.Print(masterDb)
+	crudHandler := crud.NewCRUD(masterDb)
 
-	handler := NewHandler(conf)
+	handler := NewHandler(conf, crudHandler)
 
 	if err := handler.Run(); err != nil {
 		log.Fatal().Err(err)
